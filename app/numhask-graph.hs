@@ -23,20 +23,18 @@ data Class
   | Commutative
   | Invertible
   | Idempotent
-  | Monoidal
-  | CMonoidal
-  | Loop
+  | Absorbing
   | Group
-  | Abelian
-  | Representable
+  | AbelianGroup
   | Additive
-  | AdditiveGroup
+  | Subtractive
   | Multiplicative
-  | MultiplicativeGroup
-  | Distribution
+  | Divisive
+  | Distributive
   | Semiring
   | Ring
   | CRing
+  | IntegralDomain
   | Field
   | ExpField
   | QuotientField
@@ -76,55 +74,39 @@ dependencies =
   , Dependency Commutative Magma Nothing
   , Dependency Invertible Magma Nothing
   , Dependency Idempotent Magma Nothing
-  , Dependency Monoidal Unital Nothing
-  , Dependency Monoidal Associative Nothing
-  , Dependency CMonoidal Unital Nothing
-  , Dependency CMonoidal Associative Nothing
-  , Dependency CMonoidal Commutative Nothing
-  , Dependency Loop Unital Nothing
-  , Dependency Loop Invertible Nothing
+  , Dependency Absorbing Magma Nothing
   , Dependency Group Unital Nothing
   , Dependency Group Invertible Nothing
   , Dependency Group Associative Nothing
-  , Dependency Abelian Unital Nothing
-  , Dependency Abelian Invertible Nothing
-  , Dependency Abelian Associative Nothing
-  , Dependency Abelian Commutative Nothing
+  , Dependency AbelianGroup Unital Nothing
+  , Dependency AbelianGroup Invertible Nothing
+  , Dependency AbelianGroup Associative Nothing
+  , Dependency AbelianGroup Commutative Nothing
   , Dependency Additive Commutative (Just Addition)
   , Dependency Additive Unital (Just Addition)
   , Dependency Additive Associative (Just Addition)
-  , Dependency AdditiveGroup Additive (Just Addition)
-  , Dependency AdditiveGroup Invertible (Just Addition)
+  , Dependency Subtractive AbelianGroup (Just Addition)
   , Dependency Multiplicative Commutative (Just Multiplication)
   , Dependency Multiplicative Unital (Just Multiplication)
   , Dependency Multiplicative Associative (Just Multiplication)
-  , Dependency MultiplicativeGroup Multiplicative (Just Multiplication)
-  , Dependency MultiplicativeGroup Invertible (Just Multiplication)
-  , Dependency Distribution Additive (Just Addition)
-  , Dependency Distribution Magma (Just Multiplication)
-  , Dependency Semiring Associative (Just Multiplication)
-  , Dependency Semiring Unital (Just Multiplication)
-  , Dependency Semiring Distribution Nothing
-  , Dependency Ring Group (Just Addition)
-  , Dependency Ring AdditiveGroup (Just Addition)
+  , Dependency Divisive AbelianGroup (Just Multiplication)
+  , Dependency Distributive Additive Nothing
+  , Dependency Distributive Magma (Just Multiplication)
+  , Dependency Semiring Additive Nothing
+  , Dependency Semiring Distributive Nothing
+  , Dependency Ring Subtractive Nothing
   , Dependency Ring Semiring Nothing
-  , Dependency CRing Multiplicative (Just Multiplication)
+  , Dependency CRing Commutative (Just Multiplication)
   , Dependency CRing Ring Nothing
-  , Dependency Field Group (Just Addition)
-  , Dependency Field Group (Just Multiplication)
-  , Dependency Field AdditiveGroup (Just Addition)
-  , Dependency Field MultiplicativeGroup (Just Multiplication)
-  , Dependency Field Distribution Nothing
+  , Dependency IntegralDomain CRing Nothing
+  , Dependency IntegralDomain Divisive Nothing
+  , Dependency Field IntegralDomain Nothing
   , Dependency ExpField Field Nothing
   , Dependency QuotientField Field Nothing
   , Dependency BoundedField Field Nothing
   , Dependency Integral Ring Nothing
   , Dependency FromInteger Ring Nothing
-  , Dependency Basis Representable Nothing
-  , Dependency GroupBasis Representable Nothing
-  , Dependency Module Representable Nothing
   , Dependency GroupModule Additive Nothing
-  , Dependency Banach Representable Nothing
   , Dependency Banach ExpField Nothing
   , Dependency Banach Normed Nothing
   , Dependency Hilbert Semiring Nothing
@@ -223,7 +205,7 @@ tensorProductClasses =
   , Commutative
   , Additive
   , Multiplicative
-  , Distribution
+  , Distributive
   , Semiring
   , Hilbert
   , TensorProduct
@@ -235,19 +217,36 @@ ringClasses =
   , Associative
   , Commutative
   , Invertible
+  , AbelianGroup
   , Additive
-  , AdditiveGroup
+  , Subtractive
   , Multiplicative
-  , Distribution
+  , Distributive
   , Semiring
   , Ring
   , CRing
+  , IntegralDomain
+  , Field
+  ]
+
+abelianGroupClasses =
+  [ Magma
+  , Unital
+  , Associative
+  , Commutative
+  , Invertible
+  , Absorbing
+  , Idempotent
+  , Group
+  , AbelianGroup
   ]
 
 main :: IO ()
 main = do
   let gRing = makeGraph (Config 3 30 10 1) ringClasses dependencies
   fileSvg "other/ring.svg" (600, 600) (gRing :: QDiagram SVG V2 Double Any)
+  let gAbelianGroup = makeGraph (Config 3 30 10 1) abelianGroupClasses dependencies
+  fileSvg "other/abelianGroup.svg" (600, 600) (gAbelianGroup :: QDiagram SVG V2 Double Any)
   let gHilbert = makeGraph (Config 3 30 10 1) tensorProductClasses dependencies
   fileSvg
     "other/tensor_product.svg"
