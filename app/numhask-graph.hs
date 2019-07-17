@@ -3,6 +3,7 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 import qualified Control.Foldl as L
 import Control.Monad.Primitive (unsafeInlineIO)
@@ -10,245 +11,114 @@ import qualified Data.GraphViz as GV
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import Diagrams.Backend.SVG (SVG, renderSVG)
-import Diagrams.Prelude hiding (Loop, (<>))
+import Diagrams.Prelude hiding (Loop, (<>), union)
 import Diagrams.TwoD ()
 import qualified Diagrams.TwoD.GraphViz as DGV
 import qualified Diagrams.TwoD.Text
 import Protolude as P
+import Data.List (nub, union)
 
-data Class
-  = Magma
-  | Unital
-  | Associative
-  | Commutative
-  | Invertible
-  | Idempotent
-  | Absorbing
-  | Group
-  | AbelianGroup
-  | Additive
-  | Subtractive
-  | Multiplicative
-  | Divisive
-  | Distributive
-  | Semiring
-  | Ring
-  | CRing
-  | IntegralDomain
-  | Field
-  | ExpField
-  | QuotientField
-  | BoundedField
-  | Basis
-  | GroupBasis
-  | Module
-  | GroupModule
-  | Banach
-  | Hilbert
-  | Foldable
-  | TensorProduct
-  | Integral
-  | ToInteger
-  | FromInteger
-  | Metric
-  | Normed
-  | Signed
-  | Epsilon
-  deriving (Show, Eq, Ord)
+allPairs = [(("AASB119 Liability Summary","DB,DRB,State,Police&Parl exclVC"),35),(("AASB119 Liability Summary","Liabilities - AASB119 Basis"),140),(("AASB119 Liability Summary","QSuper Product Summary"),1),(("AP","Accum&PMO&Reserves"),53),(("AP","DB Voluntary Conts"),17),(("AP","DB,DRB,State,Police&Parl exclVC"),17),(("AP","Overall QSuper"),134),(("AP","QSuper Product Summary"),1),(("AP","QSuper%202016%20Valuation%20Results.xlsb"),1),(("AP","QSuper%202017%20Valuation%20Results.xlsb"),1),(("AP","QSuper%202018%20Valuation%20Results.xlsb"),1),(("AP","Qld%20Govt%20ALM%20-%20Dec%2018%20QTR.xlsx"),10),(("AP","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),4),(("AP","Qld%20Govt%20ALM%202018m.1.xlsx"),37),(("AP","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),7882),(("AP","Return%20Assumptions%20for%20Accumulation%20and%20Income%20Account%202017m.xlsb"),3),(("AP Compare Prev","Overall QSuper"),37),(("AP Compare Prev","QSuper Product Summary"),1),(("AP Compare Prev","Qld%20Govt%20ALM%202018m.1.xlsx"),4500),(("Accum&PMO&Res Compare Prev","Accum&PMO&Reserves"),9000),(("Accum&PMO&Res Compare Prev","Overall QSuper"),37),(("Accum&PMO&Res Compare Prev","QSuper Product Summary"),1),(("Accum&PMO&Res Compare Prev","Qld%20Govt%20ALM%202018m.1.xlsx"),4500),(("Accum&PMO&Reserves","DB Voluntary Conts"),35),(("Accum&PMO&Reserves","DB,DRB,State,Police&Parl exclVC"),34),(("Accum&PMO&Reserves","Overall QSuper"),367),(("Accum&PMO&Reserves","QSuper Product Summary"),1),(("Accum&PMO&Reserves","QSuper%202016%20Valuation%20Results.xlsb"),1),(("Accum&PMO&Reserves","QSuper%202017%20Valuation%20Results.xlsb"),1),(("Accum&PMO&Reserves","QSuper%202018%20Valuation%20Results.xlsb"),1),(("Accum&PMO&Reserves","Qld%20Govt%20ALM%20-%20Dec%2018%20QTR.xlsx"),20),(("Accum&PMO&Reserves","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),4),(("Accum&PMO&Reserves","Qld%20Govt%20ALM%202018m.1.xlsx"),111),(("Accum&PMO&Reserves","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),9882),(("Accum&PMO&Reserves","Return%20Assumptions%20for%20Accumulation%20and%20Income%20Account%202017m.xlsb"),1),(("Actual vs Expected 2011","Overall QSuper"),95),(("Actual vs Expected 2011","QSuper Product Summary"),1),(("Actual vs Expected 2011","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),4824),(("Actual vs Expected 2012","Overall QSuper"),101),(("Actual vs Expected 2012","QSuper Product Summary"),1),(("Actual vs Expected 2012","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),5076),(("Actual vs Expected 2013","Overall QSuper"),101),(("Actual vs Expected 2013","QSuper Product Summary"),1),(("Actual vs Expected 2013","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),4968),(("Actual vs Expected 2014","Accum&PMO&Reserves"),38),(("Actual vs Expected 2014","DB Voluntary Conts"),38),(("Actual vs Expected 2014","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2014","Overall QSuper"),98),(("Actual vs Expected 2014","QSuper Product Summary"),1),(("Actual vs Expected 2014","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),1172),(("Actual vs Expected 2015","Accum&PMO&Reserves"),38),(("Actual vs Expected 2015","DB Voluntary Conts"),38),(("Actual vs Expected 2015","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2015","Overall QSuper"),38),(("Actual vs Expected 2015","QSuper Product Summary"),1),(("Actual vs Expected 2015","Qld%20Govt%20ALM%202014b.3%20Links.xlsx"),36),(("Actual vs Expected 2015","Qld%20Govt%20ALM%202014u.1%20Links.xlsx"),191),(("Actual vs Expected 2016","Accum&PMO&Reserves"),38),(("Actual vs Expected 2016","DB Voluntary Conts"),38),(("Actual vs Expected 2016","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2016","Overall QSuper"),38),(("Actual vs Expected 2016","QSuper Product Summary"),1),(("Actual vs Expected 2016","Qld%20Govt%20ALM%202014b.3%20Links.xlsx"),36),(("Actual vs Expected 2016","Qld%20Govt%20ALM%202015m.2%20Links.xlsx"),190),(("Actual vs Expected 2017","Accum&PMO&Reserves"),38),(("Actual vs Expected 2017","DB Voluntary Conts"),38),(("Actual vs Expected 2017","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2017","Overall QSuper"),38),(("Actual vs Expected 2017","QSuper Product Summary"),1),(("Actual vs Expected 2017","Qld%20Govt%20ALM%202014b.3%20Links.xlsx"),36),(("Actual vs Expected 2017","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),191),(("Actual vs Expected 2018","Accum&PMO&Reserves"),38),(("Actual vs Expected 2018","DB Voluntary Conts"),38),(("Actual vs Expected 2018","DB,DRB,State,Police&Parl exclVC"),39),(("Actual vs Expected 2018","Overall QSuper"),38),(("Actual vs Expected 2018","QSuper Product Summary"),1),(("Actual vs Expected 2018","Qld%20Govt%20ALM%202014b.3%20Links.xlsx"),36),(("Actual vs Expected 2018","Qld%20Govt%20ALM%202017m.5%20Links%20-%20After%20CF%20Share%20Adjustment.xlsx"),194),(("Actual vs Expected 2019","Accum&PMO&Reserves"),38),(("Actual vs Expected 2019","DB Voluntary Conts"),38),(("Actual vs Expected 2019","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2019","Overall QSuper"),38),(("Actual vs Expected 2019","QSuper Product Summary"),1),(("Actual vs Expected 2019","Qld%20Govt%20ALM%202014b.3%20Links.xlsx"),36),(("Actual vs Expected 2019","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),200),(("Adjustments - Treas Disc Rates","DB,DRB,State,Police&Parl exclVC"),130),(("Adjustments - Treas Disc Rates","QSuper DB Journal - Fixed Disc"),133),(("Adjustments - Treas Disc Rates","QSuper%202018%20Valuation%20Cash%20Flows%20-%20Revised%20Best%20Estimates%20for%202019b.xlsb"),29),(("Adjustments - Treas Disc Rates","QSuper%202018%20Valuation%20Results.xlsb"),4),(("Adjustments - Treas Disc Rates","Real%20Yields%202019%20-%202019b.1.xlsb"),2),(("Compare Model Versions","Adjustments - Treas Disc Rates"),4),(("Compare Model Versions","Judges Journal - Treas Disc"),9),(("Compare Model Versions","QSuper DB  Journal - Treas Disc"),24),(("Compare Model Versions","Qld%20Govt%20ALM%202018b.1%20Links.xlsx"),37),(("Compare Model Versions","Qld%20Govt%20ALM%202018m.1.xlsx"),37),(("DB Surplus-Funding & QIC","DB,DRB,State,Police&Parl exclVC"),210),(("DB Surplus-Funding & QIC","Liabilities - Funding Basis"),105),(("DB Surplus-Funding & QIC","QSuper%202018%20Valuation%20Results.xlsb"),1),(("DB Surplus-Funding & QIC","Qld%20Govt%20ALM%202018m.1.xlsx"),96),(("DB Surplus-Latest AASB119 & QIC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Latest AASB119 & QIC","Liabilities - AASB119 Basis"),96),(("DB Surplus-Latest AASB119 & QTC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Latest AASB119 & QTC","Liabilities - AASB119 Basis"),96),(("DB Surplus-Treas Rates & QIC","Adjustments - Treas Disc Rates"),10),(("DB Surplus-Treas Rates & QIC","DB Surplus-Funding & QIC"),1),(("DB Surplus-Treas Rates & QIC","DB Surplus-Latest AASB119 & QIC"),14),(("DB Surplus-Treas Rates & QIC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Treas Rates & QIC","Financial%20Assumptions%20-%20Historical%20Summary.xlsb"),24),(("DB Surplus-Treas Rates & QIC","Liabilities - AASB119 Basis"),45),(("DB Surplus-Treas Rates & QIC","QSuper DB  Journal - Treas Disc"),30),(("DB Surplus-Treas Rates & QIC","Qld%20Govt%20ALM%202018m.1.xlsx"),125),(("DB Surplus-Treas Rates & QTC","DB Surplus-Latest AASB119 & QIC"),14),(("DB Surplus-Treas Rates & QTC","DB Surplus-Treas Rates & QIC"),7),(("DB Surplus-Treas Rates & QTC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Treas Rates & QTC","Liabilities - AASB119 Basis"),45),(("DB Surplus-Treas Rates & QTC","QSuper DB  Journal - Treas Disc"),30),(("DB Vol Conts Compare Prev","DB Voluntary Conts"),9000),(("DB Vol Conts Compare Prev","Overall QSuper"),37),(("DB Vol Conts Compare Prev","QSuper Product Summary"),1),(("DB Vol Conts Compare Prev","Qld%20Govt%20ALM%202017b.4%20Links.xlsx"),320),(("DB Vol Conts Compare Prev","Qld%20Govt%20ALM%202018m.1.xlsx"),4180),(("DB Voluntary Conts","Accum&PMO&Reserves"),126),(("DB Voluntary Conts","DB,DRB,State,Police&Parl exclVC"),72),(("DB Voluntary Conts","Overall QSuper"),224),(("DB Voluntary Conts","QSuper Product Summary"),1),(("DB Voluntary Conts","QSuper%202016%20Valuation%20Results.xlsb"),1),(("DB Voluntary Conts","QSuper%202017%20Valuation%20Results.xlsb"),1),(("DB Voluntary Conts","QSuper%202018%20Valuation%20Results.xlsb"),1),(("DB Voluntary Conts","Qld%20Govt%20ALM%20-%20Dec%2018%20QTR.xlsx"),8),(("DB Voluntary Conts","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),2),(("DB Voluntary Conts","Qld%20Govt%20ALM%202018m.1.xlsx"),37),(("DB Voluntary Conts","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),7938),(("DB ex VC Compare Prev","DB,DRB,State,Police&Parl exclVC"),9000),(("DB ex VC Compare Prev","Overall QSuper"),37),(("DB ex VC Compare Prev","QSuper Product Summary"),1),(("DB ex VC Compare Prev","Qld%20Govt%20ALM%202018m.1.xlsx"),4500),(("DB,DRB,State,Police&Parl exclVC","Accum&PMO&Reserves"),138),(("DB,DRB,State,Police&Parl exclVC","Beneficiary%20payments%20to%20date%202018-19.xlsx"),2),(("DB,DRB,State,Police&Parl exclVC","DB Voluntary Conts"),73),(("DB,DRB,State,Police&Parl exclVC","Overall QSuper"),376),(("DB,DRB,State,Police&Parl exclVC","QIC%20QTC%20balances%20for%20SAO%2017-18.xlsx"),1),(("DB,DRB,State,Police&Parl exclVC","QSuper Product Summary"),1),(("DB,DRB,State,Police&Parl exclVC","QSuper%202016%20Valuation%20Results.xlsb"),2),(("DB,DRB,State,Police&Parl exclVC","QSuper%202017%20Valuation%20Results.xlsb"),2),(("DB,DRB,State,Police&Parl exclVC","QSuper%202018%20Valuation%20Cash%20Flows%20-%20Revised%20Best%20Estimates%20for%202019b.xlsb"),213),(("DB,DRB,State,Police&Parl exclVC","QSuper%202018%20Valuation%20Results.xlsb"),2),(("DB,DRB,State,Police&Parl exclVC","Qld%20Govt%20ALM%20-%20Dec%2018%20QTR.xlsx"),11),(("DB,DRB,State,Police&Parl exclVC","Qld%20Govt%20ALM%202014m.2%20Links.xlsx"),2),(("DB,DRB,State,Police&Parl exclVC","Qld%20Govt%20ALM%202017m.5%20Links%20-%20After%20CF%20Share%20Adjustment.xlsx"),2),(("DB,DRB,State,Police&Parl exclVC","Qld%20Govt%20ALM%202018m.1.xlsx"),102),(("DB,DRB,State,Police&Parl exclVC","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),8582),(("Funding Liability Summary","Liabilities - Funding Basis"),140),(("Funding Liability Summary","QSuper Product Summary"),1),(("Judges Assets","DB,DRB,State,Police&Parl exclVC"),44),(("Judges Assets","Judges Duration"),2),(("Judges Assets","Judges Liabilities"),44),(("Judges Assets","QIC%20QTC%20balances%20for%20SAO%2017-18.xlsx"),2),(("Judges Duration","Adjustments - Treas Disc Rates"),20),(("Judges Duration","Employee%20Entitlements%20Disclosure%20under%20AASB%20119%20-%202016-17.xlsb"),1),(("Judges Duration","Financial%20Assumptions%20-%20Historical%20Summary.xlsb"),2),(("Judges Duration","Judges%202017%20Valuation%20Results%20-%20Disclosure.xlsb"),1),(("Judges Duration","Judges%202018%20Valuation%20Results%20-%20Disclosure.xlsb"),1),(("Judges Duration","Judges%202018m1%20Cash%20Flows.xlsb"),130),(("Judges Journal - Fixed Disc","Employee%20Entitlements%20Disclosure%20under%20AASB%20119%20-%202017-18.xlsb"),1),(("Judges Journal - Fixed Disc","Judges Assets"),219),(("Judges Journal - Fixed Disc","Judges Liabilities"),180),(("Judges Journal - Fixed Disc","QIC%20QTC%20balances%20for%20SAO%2017-18.xlsx"),1),(("Judges Journal - Fixed Disc","QSuper DB Journal - Fixed Disc"),13),(("Judges Journal - Fixed Disc","Qld%20Govt%20ALM%202018m.1.xlsx"),1020),(("Judges Journal - Treas Disc","Judges Journal - Fixed Disc"),82),(("Judges Journal - Treas Disc","Judges Liabilities"),150),(("Judges Journal - Treas Disc","QSuper DB  Journal - Treas Disc"),1),(("Judges Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),12),(("Judges Journal - Treas Disc","Qld%20Govt%20ALM%202018m.1.xlsx"),960),(("Judges Liabilities","Adjustments - Treas Disc Rates"),22),(("Judges Liabilities","Judges Duration"),24),(("Judges Liabilities","Judges%202018m1%20Cash%20Flows.xlsb"),133),(("LSL Assets","DB,DRB,State,Police&Parl exclVC"),42),(("LSL Assets","LSL Duration"),1),(("LSL Assets","LSL Liabilities"),44),(("LSL Assets","LSL%202018%20Cash%20Flows.xlsb"),105),(("LSL Duration","Adjustments - Treas Disc Rates"),20),(("LSL Duration","LSL%202018%20Cash%20Flows.xlsb"),260),(("LSL Duration","LSL%202018%20Valuation%20Results.xlsb"),1),(("LSL Journal - Fixed Disc","Employee%20Entitlements%20Disclosure%20under%20AASB%20119%20-%202017-18.xlsb"),1),(("LSL Journal - Fixed Disc","LSL Liabilities"),210),(("LSL Journal - Fixed Disc","QSuper DB Journal - Fixed Disc"),13),(("LSL Journal - Fixed Disc","Qld%20Govt%20ALM%202018m.1.xlsx"),480),(("LSL Journal - Fixed Disc","Qld%20Govt%20ALM%202019b.1%20-%20Kirrilly's%20Updated%20Fiscal%20Tabs.xlsx"),5),(("LSL Journal - Treas Disc","LSL Journal - Fixed Disc"),11),(("LSL Journal - Treas Disc","LSL Liabilities"),210),(("LSL Journal - Treas Disc","QSuper DB  Journal - Treas Disc"),1),(("LSL Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),12),(("LSL Journal - Treas Disc","Qld%20Govt%20ALM%202018m.1.xlsx"),480),(("LSL Journal - Treas Disc","Qld%20Govt%20ALM%202019b.1%20-%20Kirrilly's%20Updated%20Fiscal%20Tabs.xlsx"),5),(("LSL Liabilities","Adjustments - Treas Disc Rates"),22),(("LSL Liabilities","LSL Duration"),24),(("LSL Liabilities","LSL%202018%20Cash%20Flows.xlsb"),462),(("LSL QTC Fiscal","LSL Journal - Treas Disc"),47),(("LSL QTC Fiscal","Qld%20Govt%20ALM%202019b.1%20-%20Kirrilly's%20Updated%20Fiscal%20Tabs.xlsx"),1),(("LTAAB Assets & Liabs","2018Q3%20Quarterly%20Report.xlsb"),28),(("LTAAB Assets & Liabs","DB Surplus-Treas Rates & QIC"),15),(("LTAAB Assets & Liabs","DB,DRB,State,Police&Parl exclVC"),64),(("LTAAB Assets & Liabs","Judges Assets"),18),(("LTAAB Assets & Liabs","Judges Journal - Treas Disc"),10),(("LTAAB Assets & Liabs","Judges%202005%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","Judges%202006%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","Judges%202007%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","Judges%202007%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","Judges%202008%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","Judges%202008%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","Judges%202009%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","Judges%202009%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","Judges%202010%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","Judges%202010%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","Judges%202011%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","Judges%202011%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","Judges%202012%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","Judges%202012%20Valuation%20Results%20-%20Disclosure.xls"),1),(("LTAAB Assets & Liabs","Judges%202013%20Cash%20Flows.xlsx"),1),(("LTAAB Assets & Liabs","Judges%202013%20Valuation%20Results%20-%20Disclosure.xls"),1),(("LTAAB Assets & Liabs","Judges%202014%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202014%20Valuation%20Results%20-%20Disclosure.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202015%20Valuation%20Results%20-%20Disclosure.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202015m1%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202016%20Valuation%20Results%20-%20Disclosure.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202016m1%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202017%20Valuation%20Results%20-%20Disclosure.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202017m1%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","Judges%202018m1%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","LSL Journal - Treas Disc"),10),(("LTAAB Assets & Liabs","LSL%202004%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","LSL%202005%20Cash%20Flows%20-%20New%20Entrants%20for%2030%20years.xls"),1),(("LTAAB Assets & Liabs","LSL%202006%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","LSL%202007%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","LSL%202008%20Cash%20Flows%20-%20March%20Data.xls"),1),(("LTAAB Assets & Liabs","LSL%202009%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","LSL%202010%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","LSL%202011%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","LSL%202012%20Cash%20Flows.xls"),1),(("LTAAB Assets & Liabs","LSL%202013%20Cash%20Flows.xlsx"),1),(("LTAAB Assets & Liabs","LSL%202014%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","LSL%202015m1%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","LSL%202016m1%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","LSL%202017m1%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","LSL%202018%20Cash%20Flows.xlsb"),1),(("LTAAB Assets & Liabs","Overall%20Judges%20Pension%20Summary%202004.xls"),1),(("LTAAB Assets & Liabs","Parl%202004%20Results.xls"),1),(("LTAAB Assets & Liabs","Parl%202005%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","Parl%202006%20Valuation%20Results.xls"),1),(("LTAAB Assets & Liabs","QGIF Assets"),18),(("LTAAB Assets & Liabs","QGIF Journal - Treas Disc"),10),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202005%20by%20Class.xls"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202006%20by%20Class%20-%20No%20Links.xls"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202007%20by%20Class.xls"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202008%20by%20Class.xls"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202009%20by%20Class.xls"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202010%20by%20Class.xls"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202011%20by%20Class.xls"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202012%20by%20Class.xlsb"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202013%20by%20Class_incl_fmrNDRRA.xlsb"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202014%20by%20Class%20Fixed%20Disc.xlsb"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202015%20by%20Class%20Treas%20Disc.xlsb"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202016%20by%20Class%20Treas%20Disc.xlsb"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202017%20by%20Class%20Treas%20Disc.xlsb"),1),(("LTAAB Assets & Liabs","QGIF%20-%20Projections%202018%20by%20Class%20Treas%20Disc.xlsb"),1),(("LTAAB Assets & Liabs","QSuper DB  Journal - Treas Disc"),10),(("Liabilities - AASB119 Basis","Accum&PMO&Reserves"),73),(("Liabilities - AASB119 Basis","DB,DRB,State,Police&Parl exclVC"),430),(("Liabilities - AASB119 Basis","Liabilities - Funding Basis"),58),(("Liabilities - AASB119 Basis","Overall QSuper"),36),(("Liabilities - AASB119 Basis","QSuper DB Journal - Fixed Disc"),1),(("Liabilities - AASB119 Basis","QSuper Product Summary"),14),(("Liabilities - AASB119 Basis","QSuper%202017%20Valuation%20Results.xlsb"),4),(("Liabilities - AASB119 Basis","QSuper%202018%20Valuation%20Cash%20Flows%20-%20Revised%20Best%20Estimates%20for%202019b.xlsb"),165),(("Liabilities - AASB119 Basis","QSuper%202018%20Valuation%20Results.xlsb"),5),(("Liabilities - AASB119 Basis","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),277),(("Liabilities - Funding Basis","Accum&PMO&Reserves"),49),(("Liabilities - Funding Basis","Analysis%20of%20Salary%20Increases%202017-2018.xlsb"),1),(("Liabilities - Funding Basis","DB,DRB,State,Police&Parl exclVC"),458),(("Liabilities - Funding Basis","Liabilities - AASB119 Basis"),20),(("Liabilities - Funding Basis","Overall QSuper"),36),(("Liabilities - Funding Basis","Parl%20Pensions%202018.xlsb"),1),(("Liabilities - Funding Basis","QSuper Product Summary"),2),(("Liabilities - Funding Basis","QSuper%202017%20Valuation%20Results.xlsb"),3),(("Liabilities - Funding Basis","QSuper%202018%20Valuation%20Cash%20Flows%20-%20Revised%20Best%20Estimates%20for%202019b.xlsb"),162),(("Liabilities - Funding Basis","QSuper%202018%20Valuation%20Results.xlsb"),6),(("Liabilities - Funding Basis","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),293),(("Liabilities-AASB119 vs Prev","Liabilities - AASB119 Basis"),2804),(("Liabilities-AASB119 vs Prev","Overall QSuper"),35),(("Liabilities-AASB119 vs Prev","QSuper Product Summary"),1),(("Liabilities-AASB119 vs Prev","Qld%20Govt%20ALM%202015b.3.xlsx"),39),(("Liabilities-AASB119 vs Prev","Qld%20Govt%20ALM%202016m.3%20Links.xlsx"),3),(("Liabilities-AASB119 vs Prev","Qld%20Govt%20ALM%202017b.4%20Links.xlsx"),40),(("Liabilities-AASB119 vs Prev","Qld%20Govt%20ALM%202018m.1.xlsx"),1320),(("Liabilities-Funding vs Prev","Liabilities - Funding Basis"),2720),(("Liabilities-Funding vs Prev","Overall QSuper"),35),(("Liabilities-Funding vs Prev","QSuper Product Summary"),1),(("Liabilities-Funding vs Prev","Qld%20Govt%20ALM%202018m.1.xlsx"),1360),(("Overall QSuper","Accum&PMO&Reserves"),2841),(("Overall QSuper","DB Voluntary Conts"),2376),(("Overall QSuper","DB,DRB,State,Police&Parl exclVC"),2394),(("Overall QSuper","QSuper Product Summary"),1),(("Overall QSuper","Qld%20Govt%20ALM%202018m.1.xlsx"),74),(("Overall QSuper","Qld%20Govt%20ALM%202018m.2%20Links.xlsx"),12802),(("Overall QSuper Compare Prev","Overall QSuper"),9037),(("Overall QSuper Compare Prev","QSuper Product Summary"),1),(("Overall QSuper Compare Prev","Qld%20Govt%20ALM%202018m.1.xlsx"),4500),(("QGIF Assets","Judges Assets"),40),(("QGIF Assets","QGIF%20-%20Projections%202018-%20Assets.xlsb"),121),(("QGIF Assets","QIC%20QTC%20balances%20for%20SAO%2017-18.xlsx"),1),(("QGIF Journal - Treas Disc","QGIF Assets"),99),(("QGIF Journal - Treas Disc","QGIF Liabilities - Treas Disc"),240),(("QGIF Journal - Treas Disc","QGIF%20-%20Projections%202018%20by%20Class%20Treas%20Disc.xlsb"),2),(("QGIF Journal - Treas Disc","QGIF%20Disclosure%20-%202017-18.xlsb"),1),(("QGIF Journal - Treas Disc","QIC%20QTC%20balances%20for%20SAO%2017-18.xlsx"),1),(("QGIF Journal - Treas Disc","QSuper DB  Journal - Treas Disc"),1),(("QGIF Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),12),(("QGIF Journal - Treas Disc","Qld%20Govt%20ALM%202018m.1.xlsx"),960),(("QGIF Liabilities - Treas Disc","QGIF Assets"),20),(("QGIF Liabilities - Treas Disc","QGIF%20-%20Projections%202018%20by%20Class%20Treas%20Disc.xlsb"),1700),(("QGIF QTC Fiscal","QGIF Journal - Treas Disc"),66),(("QSuper DB  Journal - Treas Disc","Adjustments - Treas Disc Rates"),679),(("QSuper DB  Journal - Treas Disc","DB,DRB,State,Police&Parl exclVC"),230),(("QSuper DB  Journal - Treas Disc","Liabilities - AASB119 Basis"),120),(("QSuper DB  Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),236),(("QSuper DB  Journal - Treas Disc","Qld%20Govt%20ALM%202018m.1.xlsx"),1190),(("QSuper DB Journal - Fixed Disc","AASB119 Liability Summary"),20),(("QSuper DB Journal - Fixed Disc","Adjustments - Treas Disc Rates"),1),(("QSuper DB Journal - Fixed Disc","DB,DRB,State,Police&Parl exclVC"),1660),(("QSuper DB Journal - Fixed Disc","Employee%20Entitlements%20Disclosure%20under%20AASB%20119%20-%202017-18.xlsb"),2),(("QSuper DB Journal - Fixed Disc","Liabilities - AASB119 Basis"),660),(("QSuper DB Journal - Fixed Disc","QSuper%202018%20Valuation%20Results.xlsb"),2),(("QSuper DB Journal - Fixed Disc","Qld%20Govt%20ALM%202018m.1.xlsx"),1328),(("QSuper Product Summary","Accum&PMO&Reserves"),266),(("QSuper Product Summary","DB Voluntary Conts"),108),(("QSuper Product Summary","DB,DRB,State,Police&Parl exclVC"),72),(("QSuper Product Summary","Funding Liability Summary"),96),(("QSuper Product Summary","Overall QSuper"),35),(("QSuper Product Summary","Qld%20Govt%20ALM%202008b.5%20-%20Used%20by%20Treasury.xls"),386),(("QSuper Product Summary","Qld%20Govt%20ALM%202008m.5%20Links.xls"),541),(("QSuper Product Summary","Qld%20Govt%20ALM%202009b.2.xls"),431),(("Super Provision QTC Fiscal","Adjustments - Treas Disc Rates"),10),(("Super Provision QTC Fiscal","Judges Journal - Treas Disc"),31),(("Super Provision QTC Fiscal","QSuper DB  Journal - Treas Disc"),46),(("Super Provision QTC Fiscal","Super invest QTC Fiscal"),15),(("Super invest QTC Fiscal","Judges Journal - Treas Disc"),26),(("Super invest QTC Fiscal","QSuper DB  Journal - Treas Disc"),41),(("Tridata QTC","LSL QTC Fiscal"),20),(("Tridata QTC","QGIF QTC Fiscal"),20),(("Tridata QTC","Super Provision QTC Fiscal"),35),(("Version Control","QSuper Product Summary"),21)]
 
-data Family
-  = Addition
-  | Multiplication
-  deriving (Show, Eq, Ord)
+sheetPairs = [(("AASB119 Liability Summary","DB,DRB,State,Police&Parl exclVC"),35),(("AASB119 Liability Summary","Liabilities - AASB119 Basis"),140),(("AASB119 Liability Summary","QSuper Product Summary"),1),(("AP","Accum&PMO&Reserves"),53),(("AP","DB Voluntary Conts"),17),(("AP","DB,DRB,State,Police&Parl exclVC"),17),(("AP","Overall QSuper"),134),(("AP","QSuper Product Summary"),1),(("AP Compare Prev","Overall QSuper"),37),(("AP Compare Prev","QSuper Product Summary"),1),(("Accum&PMO&Res Compare Prev","Accum&PMO&Reserves"),9000),(("Accum&PMO&Res Compare Prev","Overall QSuper"),37),(("Accum&PMO&Res Compare Prev","QSuper Product Summary"),1),(("Accum&PMO&Reserves","DB Voluntary Conts"),35),(("Accum&PMO&Reserves","DB,DRB,State,Police&Parl exclVC"),34),(("Accum&PMO&Reserves","Overall QSuper"),367),(("Accum&PMO&Reserves","QSuper Product Summary"),1),(("Actual vs Expected 2011","Overall QSuper"),95),(("Actual vs Expected 2011","QSuper Product Summary"),1),(("Actual vs Expected 2012","Overall QSuper"),101),(("Actual vs Expected 2012","QSuper Product Summary"),1),(("Actual vs Expected 2013","Overall QSuper"),101),(("Actual vs Expected 2013","QSuper Product Summary"),1),(("Actual vs Expected 2014","Accum&PMO&Reserves"),38),(("Actual vs Expected 2014","DB Voluntary Conts"),38),(("Actual vs Expected 2014","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2014","Overall QSuper"),98),(("Actual vs Expected 2014","QSuper Product Summary"),1),(("Actual vs Expected 2015","Accum&PMO&Reserves"),38),(("Actual vs Expected 2015","DB Voluntary Conts"),38),(("Actual vs Expected 2015","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2015","Overall QSuper"),38),(("Actual vs Expected 2015","QSuper Product Summary"),1),(("Actual vs Expected 2016","Accum&PMO&Reserves"),38),(("Actual vs Expected 2016","DB Voluntary Conts"),38),(("Actual vs Expected 2016","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2016","Overall QSuper"),38),(("Actual vs Expected 2016","QSuper Product Summary"),1),(("Actual vs Expected 2017","Accum&PMO&Reserves"),38),(("Actual vs Expected 2017","DB Voluntary Conts"),38),(("Actual vs Expected 2017","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2017","Overall QSuper"),38),(("Actual vs Expected 2017","QSuper Product Summary"),1),(("Actual vs Expected 2018","Accum&PMO&Reserves"),38),(("Actual vs Expected 2018","DB Voluntary Conts"),38),(("Actual vs Expected 2018","DB,DRB,State,Police&Parl exclVC"),39),(("Actual vs Expected 2018","Overall QSuper"),38),(("Actual vs Expected 2018","QSuper Product Summary"),1),(("Actual vs Expected 2019","Accum&PMO&Reserves"),38),(("Actual vs Expected 2019","DB Voluntary Conts"),38),(("Actual vs Expected 2019","DB,DRB,State,Police&Parl exclVC"),38),(("Actual vs Expected 2019","Overall QSuper"),38),(("Actual vs Expected 2019","QSuper Product Summary"),1),(("Adjustments - Treas Disc Rates","DB,DRB,State,Police&Parl exclVC"),130),(("Adjustments - Treas Disc Rates","QSuper DB Journal - Fixed Disc"),133),(("Compare Model Versions","Adjustments - Treas Disc Rates"),4),(("Compare Model Versions","Judges Journal - Treas Disc"),9),(("Compare Model Versions","QSuper DB  Journal - Treas Disc"),24),(("DB Surplus-Funding & QIC","DB,DRB,State,Police&Parl exclVC"),210),(("DB Surplus-Funding & QIC","Liabilities - Funding Basis"),105),(("DB Surplus-Latest AASB119 & QIC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Latest AASB119 & QIC","Liabilities - AASB119 Basis"),96),(("DB Surplus-Latest AASB119 & QTC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Latest AASB119 & QTC","Liabilities - AASB119 Basis"),96),(("DB Surplus-Treas Rates & QIC","Adjustments - Treas Disc Rates"),10),(("DB Surplus-Treas Rates & QIC","DB Surplus-Funding & QIC"),1),(("DB Surplus-Treas Rates & QIC","DB Surplus-Latest AASB119 & QIC"),14),(("DB Surplus-Treas Rates & QIC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Treas Rates & QIC","Liabilities - AASB119 Basis"),45),(("DB Surplus-Treas Rates & QIC","QSuper DB  Journal - Treas Disc"),30),(("DB Surplus-Treas Rates & QTC","DB Surplus-Latest AASB119 & QIC"),14),(("DB Surplus-Treas Rates & QTC","DB Surplus-Treas Rates & QIC"),7),(("DB Surplus-Treas Rates & QTC","DB,DRB,State,Police&Parl exclVC"),192),(("DB Surplus-Treas Rates & QTC","Liabilities - AASB119 Basis"),45),(("DB Surplus-Treas Rates & QTC","QSuper DB  Journal - Treas Disc"),30),(("DB Vol Conts Compare Prev","DB Voluntary Conts"),9000),(("DB Vol Conts Compare Prev","Overall QSuper"),37),(("DB Vol Conts Compare Prev","QSuper Product Summary"),1),(("DB Voluntary Conts","Accum&PMO&Reserves"),126),(("DB Voluntary Conts","DB,DRB,State,Police&Parl exclVC"),72),(("DB Voluntary Conts","Overall QSuper"),224),(("DB Voluntary Conts","QSuper Product Summary"),1),(("DB ex VC Compare Prev","DB,DRB,State,Police&Parl exclVC"),9000),(("DB ex VC Compare Prev","Overall QSuper"),37),(("DB ex VC Compare Prev","QSuper Product Summary"),1),(("DB,DRB,State,Police&Parl exclVC","Accum&PMO&Reserves"),138),(("DB,DRB,State,Police&Parl exclVC","DB Voluntary Conts"),73),(("DB,DRB,State,Police&Parl exclVC","Overall QSuper"),376),(("DB,DRB,State,Police&Parl exclVC","QSuper Product Summary"),1),(("Funding Liability Summary","Liabilities - Funding Basis"),140),(("Funding Liability Summary","QSuper Product Summary"),1),(("Judges Assets","DB,DRB,State,Police&Parl exclVC"),44),(("Judges Assets","Judges Duration"),2),(("Judges Assets","Judges Liabilities"),44),(("Judges Duration","Adjustments - Treas Disc Rates"),20),(("Judges Journal - Fixed Disc","Judges Assets"),219),(("Judges Journal - Fixed Disc","Judges Liabilities"),180),(("Judges Journal - Fixed Disc","QSuper DB Journal - Fixed Disc"),13),(("Judges Journal - Treas Disc","Judges Journal - Fixed Disc"),82),(("Judges Journal - Treas Disc","Judges Liabilities"),150),(("Judges Journal - Treas Disc","QSuper DB  Journal - Treas Disc"),1),(("Judges Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),12),(("Judges Liabilities","Adjustments - Treas Disc Rates"),22),(("Judges Liabilities","Judges Duration"),24),(("LSL Assets","DB,DRB,State,Police&Parl exclVC"),42),(("LSL Assets","LSL Duration"),1),(("LSL Assets","LSL Liabilities"),44),(("LSL Duration","Adjustments - Treas Disc Rates"),20),(("LSL Journal - Fixed Disc","LSL Liabilities"),210),(("LSL Journal - Fixed Disc","QSuper DB Journal - Fixed Disc"),13),(("LSL Journal - Treas Disc","LSL Journal - Fixed Disc"),11),(("LSL Journal - Treas Disc","LSL Liabilities"),210),(("LSL Journal - Treas Disc","QSuper DB  Journal - Treas Disc"),1),(("LSL Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),12),(("LSL Liabilities","Adjustments - Treas Disc Rates"),22),(("LSL Liabilities","LSL Duration"),24),(("LSL QTC Fiscal","LSL Journal - Treas Disc"),47),(("LTAAB Assets & Liabs","DB Surplus-Treas Rates & QIC"),15),(("LTAAB Assets & Liabs","DB,DRB,State,Police&Parl exclVC"),64),(("LTAAB Assets & Liabs","Judges Assets"),18),(("LTAAB Assets & Liabs","Judges Journal - Treas Disc"),10),(("LTAAB Assets & Liabs","LSL Journal - Treas Disc"),10),(("LTAAB Assets & Liabs","QGIF Assets"),18),(("LTAAB Assets & Liabs","QGIF Journal - Treas Disc"),10),(("LTAAB Assets & Liabs","QSuper DB  Journal - Treas Disc"),10),(("Liabilities - AASB119 Basis","Accum&PMO&Reserves"),73),(("Liabilities - AASB119 Basis","DB,DRB,State,Police&Parl exclVC"),430),(("Liabilities - AASB119 Basis","Liabilities - Funding Basis"),58),(("Liabilities - AASB119 Basis","Overall QSuper"),36),(("Liabilities - AASB119 Basis","QSuper DB Journal - Fixed Disc"),1),(("Liabilities - AASB119 Basis","QSuper Product Summary"),14),(("Liabilities - Funding Basis","Accum&PMO&Reserves"),49),(("Liabilities - Funding Basis","DB,DRB,State,Police&Parl exclVC"),458),(("Liabilities - Funding Basis","Liabilities - AASB119 Basis"),20),(("Liabilities - Funding Basis","Overall QSuper"),36),(("Liabilities - Funding Basis","QSuper Product Summary"),2),(("Liabilities-AASB119 vs Prev","Liabilities - AASB119 Basis"),2804),(("Liabilities-AASB119 vs Prev","Overall QSuper"),35),(("Liabilities-AASB119 vs Prev","QSuper Product Summary"),1),(("Liabilities-Funding vs Prev","Liabilities - Funding Basis"),2720),(("Liabilities-Funding vs Prev","Overall QSuper"),35),(("Liabilities-Funding vs Prev","QSuper Product Summary"),1),(("Overall QSuper","Accum&PMO&Reserves"),2841),(("Overall QSuper","DB Voluntary Conts"),2376),(("Overall QSuper","DB,DRB,State,Police&Parl exclVC"),2394),(("Overall QSuper","QSuper Product Summary"),1),(("Overall QSuper Compare Prev","Overall QSuper"),9037),(("Overall QSuper Compare Prev","QSuper Product Summary"),1),(("QGIF Assets","Judges Assets"),40),(("QGIF Journal - Treas Disc","QGIF Assets"),99),(("QGIF Journal - Treas Disc","QGIF Liabilities - Treas Disc"),240),(("QGIF Journal - Treas Disc","QSuper DB  Journal - Treas Disc"),1),(("QGIF Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),12),(("QGIF Liabilities - Treas Disc","QGIF Assets"),20),(("QGIF QTC Fiscal","QGIF Journal - Treas Disc"),66),(("QSuper DB  Journal - Treas Disc","Adjustments - Treas Disc Rates"),679),(("QSuper DB  Journal - Treas Disc","DB,DRB,State,Police&Parl exclVC"),230),(("QSuper DB  Journal - Treas Disc","Liabilities - AASB119 Basis"),120),(("QSuper DB  Journal - Treas Disc","QSuper DB Journal - Fixed Disc"),236),(("QSuper DB Journal - Fixed Disc","AASB119 Liability Summary"),20),(("QSuper DB Journal - Fixed Disc","Adjustments - Treas Disc Rates"),1),(("QSuper DB Journal - Fixed Disc","DB,DRB,State,Police&Parl exclVC"),1660),(("QSuper DB Journal - Fixed Disc","Liabilities - AASB119 Basis"),660),(("QSuper Product Summary","Accum&PMO&Reserves"),266),(("QSuper Product Summary","DB Voluntary Conts"),108),(("QSuper Product Summary","DB,DRB,State,Police&Parl exclVC"),72),(("QSuper Product Summary","Funding Liability Summary"),96),(("QSuper Product Summary","Overall QSuper"),35),(("Super Provision QTC Fiscal","Adjustments - Treas Disc Rates"),10),(("Super Provision QTC Fiscal","Judges Journal - Treas Disc"),31),(("Super Provision QTC Fiscal","QSuper DB  Journal - Treas Disc"),46),(("Super Provision QTC Fiscal","Super invest QTC Fiscal"),15),(("Super invest QTC Fiscal","Judges Journal - Treas Disc"),26),(("Super invest QTC Fiscal","QSuper DB  Journal - Treas Disc"),41),(("Tridata QTC","LSL QTC Fiscal"),20),(("Tridata QTC","QGIF QTC Fiscal"),20),(("Tridata QTC","Super Provision QTC Fiscal"),35),(("Version Control","QSuper Product Summary"),21)]
 
-data Dependency = Dependency
-  { _class :: Class
-  , _dep :: Class
-  , _op :: Maybe Family
-  } deriving (Show, Eq, Ord)
-
-dependencies :: [Dependency]
-dependencies =
-  [ Dependency Unital Magma Nothing
-  , Dependency Associative Magma Nothing
-  , Dependency Commutative Magma Nothing
-  , Dependency Invertible Magma Nothing
-  , Dependency Idempotent Magma Nothing
-  , Dependency Absorbing Magma Nothing
-  , Dependency Group Unital Nothing
-  , Dependency Group Invertible Nothing
-  , Dependency Group Associative Nothing
-  , Dependency AbelianGroup Unital Nothing
-  , Dependency AbelianGroup Invertible Nothing
-  , Dependency AbelianGroup Associative Nothing
-  , Dependency AbelianGroup Commutative Nothing
-  , Dependency Additive Commutative (Just Addition)
-  , Dependency Additive Unital (Just Addition)
-  , Dependency Additive Associative (Just Addition)
-  , Dependency Subtractive AbelianGroup (Just Addition)
-  , Dependency Multiplicative Commutative (Just Multiplication)
-  , Dependency Multiplicative Unital (Just Multiplication)
-  , Dependency Multiplicative Associative (Just Multiplication)
-  , Dependency Divisive AbelianGroup (Just Multiplication)
-  , Dependency Distributive Additive Nothing
-  , Dependency Distributive Magma (Just Multiplication)
-  , Dependency Semiring Additive Nothing
-  , Dependency Semiring Distributive Nothing
-  , Dependency Ring Subtractive Nothing
-  , Dependency Ring Semiring Nothing
-  , Dependency CRing Commutative (Just Multiplication)
-  , Dependency CRing Ring Nothing
-  , Dependency IntegralDomain CRing Nothing
-  , Dependency IntegralDomain Divisive Nothing
-  , Dependency Field IntegralDomain Nothing
-  , Dependency ExpField Field Nothing
-  , Dependency QuotientField Field Nothing
-  , Dependency BoundedField Field Nothing
-  , Dependency Integral Ring Nothing
-  , Dependency FromInteger Ring Nothing
-  , Dependency GroupModule Additive Nothing
-  , Dependency Banach ExpField Nothing
-  , Dependency Banach Normed Nothing
-  , Dependency Hilbert Semiring Nothing
-  , Dependency TensorProduct Hilbert Nothing
-  , Dependency TensorProduct Multiplicative Nothing
-  ]
+sheets = ["AASB119 Liability Summary","AP","AP Compare Prev","Accum&PMO&Res Compare Prev","Accum&PMO&Reserves","Actual vs Expected 2011","Actual vs Expected 2012","Actual vs Expected 2013","Actual vs Expected 2014","Actual vs Expected 2015","Actual vs Expected 2016","Actual vs Expected 2017","Actual vs Expected 2018","Actual vs Expected 2019","Adjustments - Treas Disc Rates","Compare Model Versions","DB Surplus-Funding & QIC","DB Surplus-Latest AASB119 & QIC","DB Surplus-Latest AASB119 & QTC","DB Surplus-Treas Rates & QIC","DB Surplus-Treas Rates & QTC","DB Vol Conts Compare Prev","DB Voluntary Conts","DB ex VC Compare Prev","DB,DRB,State,Police&Parl exclVC","Funding Liability Summary","Judges Assets","Judges Duration","Judges Journal - Fixed Disc","Judges Journal - Treas Disc","Judges Liabilities","LSL Assets","LSL Duration","LSL Journal - Fixed Disc","LSL Journal - Treas Disc","LSL Liabilities","LSL QTC Fiscal","LTAAB Assets & Liabs","Liabilities - AASB119 Basis","Liabilities - Funding Basis","Liabilities-AASB119 vs Prev","Liabilities-Funding vs Prev","Overall QSuper","Overall QSuper Compare Prev","QGIF Assets","QGIF Journal - Treas Disc","QGIF Liabilities - Treas Disc","QGIF QTC Fiscal","QSuper DB  Journal - Treas Disc","QSuper DB Journal - Fixed Disc","QSuper Product Summary","Super Provision QTC Fiscal","Super invest QTC Fiscal","Tridata QTC","Version Control"]
 
 fileSvg f s = renderSVG f (mkSizeSpec (Just <$> r2 s))
 
 data Config = Config
   { _rectX :: Double
   , _rectY :: Double
+  , _rectWidth :: Double
   , _textScale :: Double
   , _arrowScale :: Double
+  , _arrowHeadSize :: Double
   }
 
--- | Render an annotated graph as a diagram, given functions
---   controlling the drawing of vertices and of edges.  The first
---   function is given the label and location of each vertex. The
---   second function, for each edge, is given the label and location
---   of the first vertex, the label and location of the second vertex,
---   and the label and path corresponding to the edge.
-boxes ps =
+boxes ::
+  (Renderable (Path V2 Double) b,
+    Renderable (Diagrams.TwoD.Text.Text Double) b, IsName nm) =>
+  Config ->
+  Map nm (P2 Double) ->
+  [QDiagram b V2 Double Any]
+boxes cfg ps =
   zipWith
     (\p c ->
        place
-         ((unitSquare # scaleX 50.0 # scaleY 25.0 # lc (sRGB 0.33 0.33 0.33) .
-           opacity 0.3 <>
-           (Diagrams.Prelude.text (Text.unpack $ show c) # scale 5.0)) #
+         ((unitSquare # scaleX (_rectX cfg) # scaleY (_rectY cfg) # lw (Diagrams.Prelude.local $ _rectWidth cfg) # lc (sRGB 0 0 0) .
+           opacity 0.7 <>
+           (Diagrams.Prelude.text (Text.unpack $ show c) # scale (_textScale cfg))) #
           named c)
          p)
     (Map.elems ps :: [P2 Double])
     (Map.keys ps)
 
-edge ::
+instance IsName Text
+
+edge' ::
      (Renderable (Path V2 Double) b)
-  => Dependency
+  => Config
+  -> ((Text, Text), Double)
   -> QDiagram b V2 Double Any
   -> QDiagram b V2 Double Any
-edge (Dependency to from Nothing) =
+edge' cfg ((to,from), n) =
   connectOutside'
-    (headStyle %~ fc (sRGB 0.33 0.33 0.33) . opacity 0.3 $ shaftStyle %~
-     lc (sRGB 0.33 0.33 0.33) .
-     opacity 0.3 $
-     arrowHead .~
-     dart $
-     headLength .~
-     8 $
-     def)
-    from
-    to
-edge (Dependency to from (Just Addition)) =
-  connectOutside'
-    (headStyle %~ fc red . opacity 0.5 $ shaftStyle %~ lc red . opacity 0.5 $
-     arrowHead .~
-     dart $
-     headLength .~
-     8 $
-     def)
-    from
-    to
-edge (Dependency to from (Just Multiplication)) =
-  connectOutside'
-    (headStyle %~ fc blue . opacity 0.5 $ shaftStyle %~ lc blue . opacity 0.5 $
-     arrowHead .~
-     dart $
-     headLength .~
-     8 $
+    (headStyle %~ fc (sRGB 0 0 0) . opacity 0.5 $
+     arrowShaft .~ shaft $
+     shaftStyle %~ lc (sRGB 0 0 0) . lw (Diagrams.Prelude.local $ (_arrowScale cfg) * n) . opacity 0.5 $
+     arrowHead .~ dart $
+     headLength .~ (Diagrams.Prelude.local $ _arrowHeadSize cfg) $
      def)
     from
     to
 
-ps cs ds =
+shaft :: Trail V2 Double
+shaft = cubicSpline False ( map p2 [(0, 0), (1, 0), (2, -0.5)])
+
+ps' cs ds =
   fst $ DGV.getGraph $ unsafeInlineIO $
   DGV.layoutGraph GV.Dot (DGV.mkGraph cs (toEdge <$> ds))
   where
-    toEdge (Dependency to from wrapper) = (from, to, wrapper)
+    toEdge ((to,from),n) = (from, to, n)
 
-instance IsName Class
-
-makeGraph ::
+makeGraph' ::
      ( (Renderable (Path V2 Double) b)
      , Renderable (Diagrams.TwoD.Text.Text Double) b
      )
   => Config
-  -> [Class]
-  -> [Dependency]
+  -> [Text]
+  -> [((Text, Text), Double)]
   -> QDiagram b V2 Double Any
-makeGraph Config {} cs ds =
-  L.fold (L.Fold (flip edge) (mconcat $ boxes (ps cs ds)) identity) ds
+makeGraph' cfg cs ds =
+  L.fold (L.Fold (flip (edge' cfg)) (mconcat $ boxes cfg (ps' cs ds)) identity) ds
 
-tensorProductClasses =
-  [ Magma
-  , Unital
-  , Associative
-  , Commutative
-  , Additive
-  , Multiplicative
-  , Distributive
-  , Semiring
-  , Hilbert
-  , TensorProduct
-  ]
 
-ringClasses =
-  [ Magma
-  , Unital
-  , Associative
-  , Commutative
-  , Invertible
-  , AbelianGroup
-  , Additive
-  , Subtractive
-  , Multiplicative
-  , Distributive
-  , Semiring
-  , Ring
-  , CRing
-  , IntegralDomain
-  , Field
-  ]
+normArrows :: Double -> Double -> Double -> [((Text, Text), Double)] -> [((Text, Text), Double)]
+normArrows ignore min' max' xs = (second $ max max' . min min' . (/sum (snd <$> xs))) <$> filter ((>ignore) . snd) xs
 
-abelianGroupClasses =
-  [ Magma
-  , Unital
-  , Associative
-  , Commutative
-  , Invertible
-  , Absorbing
-  , Idempotent
-  , Group
-  , AbelianGroup
-  ]
+removeRefs :: [Text] -> [((Text, Text), Double)] -> [((Text, Text), Double)]
+removeRefs excludes xs =
+  foldl' (\x a ->
+            filter (not . Text.isInfixOf a . fst . fst) $
+            filter (not . Text.isInfixOf a . snd . fst)
+            x) xs excludes
 
 main :: IO ()
 main = do
-  let gRing = makeGraph (Config 3 30 10 1) ringClasses dependencies
-  fileSvg "other/ring.svg" (600, 600) (gRing :: QDiagram SVG V2 Double Any)
-  let gAbelianGroup = makeGraph (Config 3 30 10 1) abelianGroupClasses dependencies
-  fileSvg "other/abelianGroup.svg" (600, 600) (gAbelianGroup :: QDiagram SVG V2 Double Any)
-  let gHilbert = makeGraph (Config 3 30 10 1) tensorProductClasses dependencies
-  fileSvg
-    "other/tensor_product.svg"
-    (600, 600)
-    (gHilbert :: QDiagram SVG V2 Double Any)
+  let sheetPairs' = normArrows 0 0.1 0.01 sheetPairs
+  let gSheets = makeGraph' (Config 50 25 0.1 5 20 2) sheets sheetPairs'
+  fileSvg "other/sheets.svg" (600, 600) (gSheets :: QDiagram SVG V2 Double Any)
+  let mainSheetPairs = normArrows 200 0.1 0.01 sheetPairs
+  let gMainSheets = makeGraph' (Config 50 25 0.1 5 10 5) (nub $ (fst <$> fst <$> mainSheetPairs) `union` (snd <$> fst <$> mainSheetPairs)) mainSheetPairs
+  fileSvg "other/mainSheets.svg" (600, 600) (gMainSheets :: QDiagram SVG V2 Double Any)
+  let refPairs = normArrows 0 0.1 0.01 allPairs
+  let gRefs = makeGraph' (Config 50 25 0.1 5 20 2) (nub $ (fst <$> fst <$> refPairs) `union` (snd <$> fst <$> refPairs)) refPairs
+  fileSvg "other/refs.svg" (600, 600) (gRefs :: QDiagram SVG V2 Double Any)
+  let mainRefPairs = normArrows 100 0.1 0.01 allPairs
+  let gMainRefs = makeGraph' (Config 50 25 0.1 5 20 2) (nub $ (fst <$> fst <$> mainRefPairs) `union` (snd <$> fst <$> mainRefPairs)) mainRefPairs
+  fileSvg "other/mainRefs.svg" (600, 600) (gMainRefs :: QDiagram SVG V2 Double Any)
+  let filteredRefPairs = removeRefs ["Compare", "Actual vs Expected", "LSL", "Judges", "2018m", "QGIF", ".xls", ".xlsb", ".xlsx"] $ normArrows 10 0.1 0.01 allPairs
+  let gFilteredRefs = makeGraph' (Config 50 25 0.1 5 20 2) (nub $ (fst <$> fst <$> filteredRefPairs) `union` (snd <$> fst <$> filteredRefPairs)) filteredRefPairs
+  fileSvg "other/filteredRefs.svg" (600, 600) (gFilteredRefs :: QDiagram SVG V2 Double Any)
+
+-- not $ (Text.isInfixOf "compare" . snd . fst $ x)) || ((Text.isInfixOf "compare" . fst . fst $ x)) || 
