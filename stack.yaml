@@ -1,11 +1,11 @@
-resolver: nightly-2018-08-15
+resolver: lts-13.29 # nightly-2018-08-15
 
 packages:
   - .
 
 extra-deps:
+  - graphviz-2999.20.0.3
   - diagrams-graphviz-1.4
-  - protolude-0.2.2
   - diagrams-lib-1.4.2.3
   - diagrams-svg-1.4.2
   - active-0.2.0.13
