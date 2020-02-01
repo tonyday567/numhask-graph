@@ -33,23 +33,19 @@ data Class
   | Distributive
   | Semiring
   | Ring
-  | CRing
+  | CommutativeRing
   | IntegralDomain
   | Field
   | ExpField
   | QuotientField
-  | BoundedField
-  | Basis
-  | GroupBasis
+  | UpperBoundedField
+  | LowerBoundedField
+  | TrigField
+  | Actor
   | Module
-  | GroupModule
-  | Banach
-  | Hilbert
-  | Foldable
-  | TensorProduct
   | Integral
-  | ToInteger
-  | FromInteger
+  | ToIntegral
+  | FromIntegral
   | Metric
   | Normed
   | Signed
@@ -85,33 +81,26 @@ dependencies =
   , Dependency Additive Commutative (Just Addition)
   , Dependency Additive Unital (Just Addition)
   , Dependency Additive Associative (Just Addition)
-  , Dependency Subtractive AbelianGroup (Just Addition)
-  , Dependency Multiplicative Commutative (Just Multiplication)
+  , Dependency Subtractive Invertible (Just Addition)
+  , Dependency Subtractive Additive (Just Addition)
   , Dependency Multiplicative Unital (Just Multiplication)
   , Dependency Multiplicative Associative (Just Multiplication)
-  , Dependency Divisive AbelianGroup (Just Multiplication)
-  , Dependency Distributive Additive Nothing
-  , Dependency Distributive Magma (Just Multiplication)
-  , Dependency Semiring Additive Nothing
+  , Dependency Divisive Invertible (Just Multiplication)
+  , Dependency Divisive Multiplicative (Just Multiplication)
+  , Dependency Distributive Additive (Just Addition)
+  , Dependency Distributive Multiplicative (Just Multiplication)
+  , Dependency Distributive Absorbing Nothing
+  , Dependency Semiring Additive (Just Addition)
   , Dependency Semiring Distributive Nothing
-  , Dependency Ring Subtractive Nothing
-  , Dependency Ring Semiring Nothing
-  , Dependency CRing Commutative (Just Multiplication)
-  , Dependency CRing Ring Nothing
-  , Dependency IntegralDomain CRing Nothing
-  , Dependency IntegralDomain Divisive Nothing
-  , Dependency Field IntegralDomain Nothing
-  , Dependency ExpField Field Nothing
-  , Dependency QuotientField Field Nothing
-  , Dependency BoundedField Field Nothing
-  , Dependency Integral Ring Nothing
-  , Dependency FromInteger Ring Nothing
-  , Dependency GroupModule Additive Nothing
-  , Dependency Banach ExpField Nothing
-  , Dependency Banach Normed Nothing
-  , Dependency Hilbert Semiring Nothing
-  , Dependency TensorProduct Hilbert Nothing
-  , Dependency TensorProduct Multiplicative Nothing
+  , Dependency Semiring Associative (Just Multiplication)
+  , Dependency Semiring Unital (Just Multiplication)
+  , Dependency Ring Distributive Nothing
+  , Dependency Ring Subtractive (Just Addition)
+  , Dependency CommutativeRing Commutative (Just Multiplication)
+  , Dependency CommutativeRing Ring Nothing
+  , Dependency IntegralDomain Ring Nothing
+  , Dependency Field CommutativeRing Nothing
+  , Dependency Field Divisive (Just Multiplication)
   ]
 
 fileSvg f s = renderSVG f (mkSizeSpec (Just <$> r2 s))
@@ -198,57 +187,24 @@ makeGraph ::
 makeGraph Config {} cs ds =
   L.fold (L.Fold (flip edge) (mconcat $ boxes (ps cs ds)) identity) ds
 
-tensorProductClasses =
-  [ Magma
-  , Unital
-  , Associative
-  , Commutative
-  , Additive
-  , Multiplicative
-  , Distributive
-  , Semiring
-  , Hilbert
-  , TensorProduct
-  ]
-
-ringClasses =
-  [ Magma
-  , Unital
-  , Associative
-  , Commutative
-  , Invertible
-  , AbelianGroup
-  , Additive
-  , Subtractive
-  , Multiplicative
-  , Distributive
-  , Semiring
-  , Ring
-  , CRing
-  , IntegralDomain
-  , Field
-  ]
-
-abelianGroupClasses =
+fieldClasses =
   [ Magma
   , Unital
   , Associative
   , Commutative
   , Invertible
   , Absorbing
-  , Idempotent
-  , Group
-  , AbelianGroup
+  , Additive
+  , Subtractive
+  , Multiplicative
+  , Divisive
+  , Distributive
+  , Ring
+  , CommutativeRing
+  , Field
   ]
 
 main :: IO ()
 main = do
-  let gRing = makeGraph (Config 3 30 10 1) ringClasses dependencies
-  fileSvg "other/ring.svg" (600, 600) (gRing :: QDiagram SVG V2 Double Any)
-  let gAbelianGroup = makeGraph (Config 3 30 10 1) abelianGroupClasses dependencies
-  fileSvg "other/abelianGroup.svg" (600, 600) (gAbelianGroup :: QDiagram SVG V2 Double Any)
-  let gHilbert = makeGraph (Config 3 30 10 1) tensorProductClasses dependencies
-  fileSvg
-    "other/tensor_product.svg"
-    (600, 600)
-    (gHilbert :: QDiagram SVG V2 Double Any)
+  let gField = makeGraph (Config 3 30 10 1) fieldClasses dependencies
+  fileSvg "other/field.svg" (600, 600) (gField :: QDiagram SVG V2 Double Any)

@@ -1,4 +1,4 @@
-resolver: lts-13.29 # nightly-2018-08-15
+resolver: lts-14.13 # nightly-2018-08-15
 
 packages:
   - .
