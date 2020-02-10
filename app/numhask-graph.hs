@@ -33,7 +33,6 @@ data Class
   | Distributive
   | Semiring
   | Ring
-  | CommutativeRing
   | IntegralDomain
   | Field
   | ExpField
@@ -41,20 +40,34 @@ data Class
   | UpperBoundedField
   | LowerBoundedField
   | TrigField
-  | Actor
+  -- Higher-kinded numbers
+  | AdditiveAction
+  | SubtractiveAction
+  | MultiplicativeAction
+  | DivisiveAction
   | Module
+  -- Lattice
+  | JoinSemiLattice
+  | MeetSemiLattice
+  | Lattice
+  | BoundedJoinSemiLattice
+  | BoundedMeetSemiLattice
+  | BoundedLattice
+  -- Integrals
   | Integral
-  | ToIntegral
-  | FromIntegral
-  | Metric
+  -- Measure
   | Normed
   | Signed
   | Epsilon
+  -- Instances
+  | Double'
+  | Int'
   deriving (Show, Eq, Ord)
 
 data Family
   = Addition
   | Multiplication
+  | Actor
   deriving (Show, Eq, Ord)
 
 data Dependency = Dependency
@@ -85,6 +98,7 @@ dependencies =
   , Dependency Subtractive Additive (Just Addition)
   , Dependency Multiplicative Unital (Just Multiplication)
   , Dependency Multiplicative Associative (Just Multiplication)
+  , Dependency Multiplicative Commutative (Just Multiplication)
   , Dependency Divisive Invertible (Just Multiplication)
   , Dependency Divisive Multiplicative (Just Multiplication)
   , Dependency Distributive Additive (Just Addition)
@@ -96,11 +110,43 @@ dependencies =
   , Dependency Semiring Unital (Just Multiplication)
   , Dependency Ring Distributive Nothing
   , Dependency Ring Subtractive (Just Addition)
-  , Dependency CommutativeRing Commutative (Just Multiplication)
-  , Dependency CommutativeRing Ring Nothing
   , Dependency IntegralDomain Ring Nothing
-  , Dependency Field CommutativeRing Nothing
+  , Dependency Field Ring Nothing
   , Dependency Field Divisive (Just Multiplication)
+  , Dependency ExpField Field Nothing
+  , Dependency QuotientField Field Nothing
+  , Dependency QuotientField Ring Nothing
+  , Dependency TrigField Field Nothing
+  , Dependency UpperBoundedField Field Nothing
+  , Dependency LowerBoundedField Field Nothing
+  -- higher-kinded relationships
+  , Dependency AdditiveAction Additive (Just Actor)
+  , Dependency SubtractiveAction Subtractive (Just Actor)
+  , Dependency MultiplicativeAction Multiplicative (Just Actor)
+  , Dependency DivisiveAction Divisive (Just Actor)
+  , Dependency Module Distributive (Just Actor)
+  , Dependency Module MultiplicativeAction Nothing
+  -- Lattice
+  , Dependency JoinSemiLattice Associative Nothing
+  , Dependency JoinSemiLattice Commutative Nothing
+  , Dependency JoinSemiLattice Idempotent Nothing
+  , Dependency MeetSemiLattice Associative Nothing
+  , Dependency MeetSemiLattice Commutative Nothing
+  , Dependency MeetSemiLattice Idempotent Nothing
+  , Dependency Lattice JoinSemiLattice Nothing
+  , Dependency Lattice MeetSemiLattice Nothing
+  , Dependency BoundedJoinSemiLattice JoinSemiLattice Nothing
+  , Dependency BoundedJoinSemiLattice Unital Nothing
+  , Dependency BoundedMeetSemiLattice MeetSemiLattice Nothing
+  , Dependency BoundedMeetSemiLattice Unital Nothing
+  , Dependency BoundedLattice BoundedJoinSemiLattice Nothing
+  , Dependency BoundedLattice BoundedMeetSemiLattice Nothing
+  , Dependency Signed Multiplicative Nothing
+  , Dependency Normed Additive Nothing
+  , Dependency Epsilon Additive Nothing
+  , Dependency Epsilon Subtractive Nothing
+  , Dependency Epsilon MeetSemiLattice Nothing
+  , Dependency Integral Distributive Nothing
   ]
 
 fileSvg f s = renderSVG f (mkSizeSpec (Just <$> r2 s))
@@ -167,6 +213,16 @@ edge (Dependency to from (Just Multiplication)) =
      def)
     from
     to
+edge (Dependency to from (Just Actor)) =
+  connectOutside'
+    (headStyle %~ fc green . opacity 0.5 $ shaftStyle %~ lc green . opacity 0.5 $
+     arrowHead .~
+     dart $
+     headLength .~
+     8 $
+     def)
+    from
+    to
 
 ps cs ds =
   fst $ DGV.getGraph $ unsafeInlineIO $
@@ -200,11 +256,50 @@ fieldClasses =
   , Divisive
   , Distributive
   , Ring
-  , CommutativeRing
   , Field
+  ]
+
+allClasses =
+  [ Magma
+  , Unital
+  , Associative
+  , Commutative
+  , Invertible
+  , Absorbing
+  , Group
+  , AbelianGroup
+  , Additive
+  , Subtractive
+  , Multiplicative
+  , Divisive
+  , Distributive
+  , Ring
+  , Field
+  , ExpField
+  , QuotientField
+  , UpperBoundedField
+  , LowerBoundedField
+  , TrigField
+  -- Higher-kinded numbers
+  , MultiplicativeAction
+  , Module
+  -- Lattice
+  , JoinSemiLattice
+  , MeetSemiLattice
+  , Lattice
+  , BoundedJoinSemiLattice
+  , BoundedMeetSemiLattice
+  , BoundedLattice
+  -- Measure
+  , Normed
+  , Signed
+  , Epsilon
+  -- Integral
   ]
 
 main :: IO ()
 main = do
   let gField = makeGraph (Config 3 30 10 1) fieldClasses dependencies
   fileSvg "other/field.svg" (600, 600) (gField :: QDiagram SVG V2 Double Any)
+  let gNumHask = makeGraph (Config 3 30 10 1) allClasses dependencies
+  fileSvg "other/numhask.svg" (600, 600) (gNumHask :: QDiagram SVG V2 Double Any)
